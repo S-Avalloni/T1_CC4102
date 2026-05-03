@@ -1,11 +1,15 @@
 
 
+#define b 204 // elementos por bloque
+
+typedef struct {
+  float clave[4];
+  int valor;
+} Nodo;
+
 typedef struct {
   int k; // cantidad de hijos, entre 1 y b
-  struct {
-    float clave[204][4]; // b claves especificando los limites del MBR
-    int valor[204]; // para cada MBR la posición relativa al archivo de ese nodo
-  } hijos;
+  Nodo hijos[b]; // solo están definidos los primeros k hijos
   char pad[12]; // 12 bytes libres
-} Nodo;
+} Rtree;
 
