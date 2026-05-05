@@ -6,20 +6,22 @@
 #include "../include/rtree.h"
 
 
-int main() {
-  FILE *datos_rand = fopen("./datos/random.bin", "rb"); 
-  if (datos_rand==NULL) {
-    perror("Error abriendo el archivo de datos aleatorios\n");
+int timeTest(const char *infile, const char *outfile, BulkFunction bulkFunction) {
+
+  FILE *datos = fopen(infile, "rb"); 
+  if (datos==NULL) {
+    perror("Error abriendo el archivo de datos\n");
     return 1;
   }
 
   for(int i = 15; i<=24; i++) {
-    remove("./vectores/vec_nodos_rand.bin");
+    fseek(datos, 0, SEEK_SET);
+    remove(outfile);
 
 
-    FILE *vector = fopen("./vectores/vec_nodos_rand.bin", "w");
+    FILE *vector = fopen(outfile, "wb");
     if (vector==NULL) {
-      perror("Error abriendo el archivo de salida rand NX\n");
+      perror("Error abriendo el archivo de salida\n");
       return 1;
     }
 
@@ -32,7 +34,7 @@ int main() {
     double cpu_time_used;
     
     start = clock();
-    bulkLoading(N, datos_rand, vector, nearestX);
+    bulkLoading(N, datos, vector, bulkFunction);
     end = clock();
 
     fclose(vector);
@@ -41,6 +43,32 @@ int main() {
     printf("Tomó %f segundos en ejecutarse para N=2^%d\n", cpu_time_used, i);
   }
   
+  return 0;
+
+}
+
+
+int main() {
+  
+  const char *datos_random = "./datos/random.bin";
+  const char *datos_eur = "./datos/europa.bin";
+
+  const char *vector_random = "./vectores/v_random.bin";
+  const char *vector_eur = "./vectores/v_europa.bin";
+  
+  
+  printf("Test para datos random y NearestX\n");
+  timeTest(datos_random, vector_random, nearestX);
+
+  printf("Test para datos europa y NearestX\n");
+  timeTest(datos_random, vector_eur, nearestX);
+
+  // printf("Test para datos random y SortTileRecursive\n");
+  // timeTest(datos_random, vector_random, sortTileRecursive);
+
+  // printf("Test para datos europa y SortTileRecursive\n");
+  // timeTest(datos_random, vector_eur, sortTileRecursive);
+
   return 0;
 }
 

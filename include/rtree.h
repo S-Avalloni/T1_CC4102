@@ -134,6 +134,7 @@ void nearestX(long n, Nodo pares[], FILE *file) {
   }
   pares = original;
   if (grupo<=b) {
+    rnodo.k = 0;
     for(long i = 0; i<grupo;i++) {
       
       rnodo.hijos[rnodo.k] = *pares;
@@ -264,6 +265,8 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
   lista = NULL;
 
   bulkFunction(resultado>>1, pares, outfile);
+  free(pares);
+  pares=NULL;
   return 0;
 }
 
