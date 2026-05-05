@@ -9,3 +9,6 @@ outputs/t1: src/t1.c include/rtree.h
 
 run: outputs/t1
 	./outputs/t1
+
+clean-v:
+	rm -f vectores/*
