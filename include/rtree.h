@@ -1,5 +1,9 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 #define b 204 // elementos por bloque
 
 typedef struct {
@@ -65,20 +69,30 @@ int cmp_cy(const void *e1, const void *e2) {
 // se especifica que las llaves de los nodos hoja es -1
 void nearestX(long n, Nodo pares[], FILE *file) {
   
+  // posición actual del archivo
   long curr = ftell(file);
+  // en el primer caso se salta el espacio de lo que sería la raiz
   if (curr==0) {
     fseek(file, sizeof(Rtree), SEEK_CUR);
   }
 
+  // se ordena in place con quick sort
+  qsort(pares, n, sizeof(Nodo), cmp_cx); 
 
-  qsort(pares, n, sizeof(Nodo), cmp_cx); // se ordena in place con quick sort
 
-  Nodo *nodos = malloc(sizeof(Nodo)*(1+(n-1)/b));
+  Nodo nodo;
+
+  // Un nodo del R-tree
   Rtree rnodo;
+
+  // cantidad de elementos de ''pares'' que ha sido vista
   int count =  0;
   long grupo;
   for(grupo = 0; grupo<(1+(n-1)/b); grupo++){
     rnodo.k = 0;
+
+    // Para calcular el MBR durante el proceso de relleno del
+    // nodo del R-tree
     float mbr_x_max, mbr_x_min, mbr_y_max, mbr_y_min;
     mbr_x_max = pares->clave[0];
     mbr_x_min = pares->clave[1];
@@ -90,7 +104,7 @@ void nearestX(long n, Nodo pares[], FILE *file) {
         break;
       }
       count++;
-      Nodo nodo = {  
+      Nodo hijo = {  
         .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
         .valor = pares->valor
       };
@@ -100,35 +114,39 @@ void nearestX(long n, Nodo pares[], FILE *file) {
       mbr_y_min = min(mbr_y_min, pares->clave[2]);
       mbr_y_max = max(mbr_y_max, pares->clave[3]);
       
-      rnodo.hijos[rnodo.k] = nodo;
+      rnodo.hijos[rnodo.k] = hijo;
       rnodo.k++;
 
       pares++;
     
     }
 
+    
+    nodo.valor = curr/sizeof(Rtree)+grupo;
+    nodo.clave[0] = mbr_x_min;
+    nodo.clave[1] = mbr_x_max;
+    nodo.clave[2] = mbr_y_min;
+    nodo.clave[3] = mbr_y_max;
 
-    nodos->valor = curr/sizeof(Rtree)+grupo;
-    nodos->clave[0] = mbr_x_min;
-    nodos->clave[1] = mbr_x_max;
-    nodos->clave[2] = mbr_y_min;
-    nodos->clave[3] = mbr_y_max;
-
-    pares[grupo] = *nodos;
+    pares[grupo] = nodo;
     fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
     
     if (count>=n) {break;}
   }
+
   if (grupo<=b) {
     for(long i = 0; i<grupo;i++) {
       pares++;
-      Nodo nodo = {
+      Nodo hijo = {
         .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
         .valor = pares->valor
       };
-      rnodo.hijos[rnodo.k] = nodo;
+      rnodo.hijos[rnodo.k] = hijo;
       rnodo.k++;
     }
+    fseek(file, 0, SEEK_SET);
+    fwrite(&rnodo, sizeof(Rtree), 1, file);
+    return;
   };
   nearestX(n, pares, file);
 }
