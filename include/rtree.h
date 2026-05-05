@@ -6,6 +6,8 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define b 204 // elementos por bloque
 
+typedef void (*BulkFunction)(long n, Nodo pares[], FILE *file);
+
 typedef struct {
   float clave[4];
   int valor;
@@ -223,4 +225,47 @@ void sortTileRecursive(long n, Nodo pares[], FILE *file) {
     }
   };
   sortTileRecursive(n, pares, file);
+}
+
+int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkFunction) {
+
+  float *lista = malloc(sizeof(float)*2*N);
+
+  size_t resultado = fread(lista, sizeof(float), 2*N, infile);
+
+  if(resultado != 2*N) {
+    fprintf(stderr, "Error leyendo el archivo de datos, %zu, error: %d, eof: %d\n", resultado, ferror(infile), feof(infile));    
+    fclose(infile);
+
+    free(lista);
+    lista=NULL;
+    
+    return 1;
+
+  } else {
+    printf("Archivo datos abierto y lista llenada, %zu elementos leidos\n", resultado);
+  }
+
+  fclose(infile);
+
+  Nodo *pares = malloc(sizeof(Nodo)*resultado>>2);
+
+  for (unsigned long i = 0; i<resultado>>2; i++) {
+    pares->clave[1] = lista[2*i];
+    pares->clave[0] = lista[2*i]; 
+    
+    pares->clave[2] = lista[2*i+1]; 
+    pares->clave[3] = lista[2*i+1];
+
+    pares->valor = -1;
+    pares++;
+  }
+
+  pares -= resultado>>2;
+
+  free(lista);
+  lista = NULL;
+
+  bulkFunction(resultado>>2, pares, outfile);
+  return 0;
 }
