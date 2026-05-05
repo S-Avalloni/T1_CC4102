@@ -6,12 +6,13 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define b 204 // elementos por bloque
 
-typedef void (*BulkFunction)(long n, Nodo pares[], FILE *file);
 
 typedef struct {
   float clave[4];
   int valor;
 } Nodo;
+
+typedef void (*BulkFunction)(long n, Nodo pares[], FILE *file);
 
 typedef struct {
   int k; // cantidad de hijos, entre 1 y b
@@ -80,7 +81,7 @@ void nearestX(long n, Nodo pares[], FILE *file) {
 
   // se ordena in place con quick sort
   qsort(pares, n, sizeof(Nodo), cmp_cx); 
-
+  Nodo *original = pares;
 
   Nodo nodo;
 
@@ -106,51 +107,46 @@ void nearestX(long n, Nodo pares[], FILE *file) {
         break;
       }
       count++;
-      Nodo hijo = {  
-        .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
-        .valor = pares->valor
-      };
 
       mbr_x_min = min(mbr_x_min, pares->clave[0]);
       mbr_x_max = max(mbr_x_max, pares->clave[1]);
       mbr_y_min = min(mbr_y_min, pares->clave[2]);
       mbr_y_max = max(mbr_y_max, pares->clave[3]);
       
-      rnodo.hijos[rnodo.k] = hijo;
-      rnodo.k++;
+      rnodo.hijos[rnodo.k] = *pares;
+      rnodo.k += 1;
 
       pares++;
     
     }
 
     
-    nodo.valor = curr/sizeof(Rtree)+grupo;
+    nodo.valor = curr/sizeof(Rtree)+grupo+1;
     nodo.clave[0] = mbr_x_min;
     nodo.clave[1] = mbr_x_max;
     nodo.clave[2] = mbr_y_min;
     nodo.clave[3] = mbr_y_max;
 
-    pares[grupo] = nodo;
+    original[grupo] = nodo;
     fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
     
     if (count>=n) {break;}
   }
-
+  pares = original;
   if (grupo<=b) {
     for(long i = 0; i<grupo;i++) {
+      
+      rnodo.hijos[rnodo.k] = *pares;
+      rnodo.k += 1;
       pares++;
-      Nodo hijo = {
-        .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
-        .valor = pares->valor
-      };
-      rnodo.hijos[rnodo.k] = hijo;
-      rnodo.k++;
     }
     fseek(file, 0, SEEK_SET);
     fwrite(&rnodo, sizeof(Rtree), 1, file);
     return;
   };
-  nearestX(n, pares, file);
+  
+  pares = original;
+  nearestX(grupo, pares, file);
 }
 
 void sortTileRecursive(long n, Nodo pares[], FILE *file) {
@@ -227,16 +223,18 @@ void sortTileRecursive(long n, Nodo pares[], FILE *file) {
   sortTileRecursive(n, pares, file);
 }
 
+// Esta función espera la cantidad de elementos a leer desde el archivo de entrada y los pone en
+// el archivo de salida según el metodo de BulkLoading especificado, estos dos archivos deben 
+// estar abiertos al momento de comenzar la función y no los cierra
 int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkFunction) {
 
+  // dos float por cada par
   float *lista = malloc(sizeof(float)*2*N);
 
   size_t resultado = fread(lista, sizeof(float), 2*N, infile);
 
   if(resultado != 2*N) {
     fprintf(stderr, "Error leyendo el archivo de datos, %zu, error: %d, eof: %d\n", resultado, ferror(infile), feof(infile));    
-    fclose(infile);
-
     free(lista);
     lista=NULL;
     
@@ -246,11 +244,10 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
     printf("Archivo datos abierto y lista llenada, %zu elementos leidos\n", resultado);
   }
 
-  fclose(infile);
+  // pares tiene asignado una posición de memoria de tamaño sizeof(Nodo) por cada par de resultados
+  Nodo *pares = malloc(sizeof(Nodo)*resultado>>1);
 
-  Nodo *pares = malloc(sizeof(Nodo)*resultado>>2);
-
-  for (unsigned long i = 0; i<resultado>>2; i++) {
+  for (unsigned long i = 0; i<(resultado>>1); i++) {
     pares->clave[1] = lista[2*i];
     pares->clave[0] = lista[2*i]; 
     
@@ -261,11 +258,13 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
     pares++;
   }
 
-  pares -= resultado>>2;
+  pares -= resultado>>1;
 
   free(lista);
   lista = NULL;
 
-  bulkFunction(resultado>>2, pares, outfile);
+  bulkFunction(resultado>>1, pares, outfile);
   return 0;
 }
+
+
