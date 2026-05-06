@@ -20,20 +20,20 @@ typedef struct {
   char pad[12]; // 12 bytes libres
 } Rtree;
 
-// Extraido de wikipedia https://en.wikipedia.org/wiki/Integer_square_root#Algorithm_using_binary_search
+// Menor k tal que k*k >= y
 long isqrt(long y) {
   long L = 0;
   long R = y + 1;
   long M;
   while (L != R - 1) {
-    M = (L + R);
-    if (M * M <= y){
+    M = (L + R)>>1;
+    if (M * M < y){
       L = M;
     } else {
       R = M;
     }
   }
-  return L;
+  return R;
 }
 
 int cmp_cx(const void *e1, const void *e2) {
@@ -152,76 +152,95 @@ void nearestX(long n, Nodo pares[], FILE *file) {
 
 void sortTileRecursive(long n, Nodo pares[], FILE *file) {
   
+  
+  // posición actual del archivo
   long curr = ftell(file);
+  // en el primer caso se salta el espacio de lo que sería la raiz
   if (curr==0) {
     fseek(file, sizeof(Rtree), SEEK_CUR);
   }
 
-  qsort(pares, n, sizeof(Nodo), cmp_cx); // se ordena in place con quick sort
-  long tamaño = isqrt((double)n/(double)b); // debo definirlo, no se si es que está bien, deberíamos tener grupos de b elementos o menos, no se puedenn mas, hay que fijarse que la multiplicación de estos numeros sea correcta
-  for (;;) { // aquí debería seguir hasta que tamaño sea mas grande que lo que quede de pares y luego hacer un ultimo sort con lo ultimo
-    qsort(pares, tamaño, sizeof(Nodo), cmp_cy);
-    pares+=tamaño;
-  }
+  // se ordena in place con quick sort
+  qsort(pares, n, sizeof(Nodo), cmp_cx);
+  
+  Nodo *original = pares;
 
-  Nodo *nodos = malloc(sizeof(Nodo)*(1+(n-1)/b));
+  // puede ser que el ultimo de estos grupos tenga muchos menos elementos
+  long cantidad_grupos = isqrt(1+(n-1)/b);
+
+  // cantidad maxima de elementos por grupo (que todavía no pueden formar un nodo)
+  long limite_grupos = 1+(n-1)/cantidad_grupos;
+
+  long restantes = n;
+  
+  Nodo nodo;
+
+  // Un nodo del R-tree
   Rtree rnodo;
-  int count =  0;
+  long count;
+
   long grupo;
-  for(grupo = 0; grupo<(1+(n-1)/b); grupo++){
-    rnodo.k = 0;
+  for (grupo = 0; grupo<cantidad_grupos; grupo++) {
+    long segmento = min(restantes, limite_grupos);
+
+    // se ordenan los elementos que se puedan en su coordenada y
+    qsort(pares, segmento, sizeof(Nodo), cmp_cy);
+    restantes -= segmento;
+    
     float mbr_x_max, mbr_x_min, mbr_y_max, mbr_y_min;
     mbr_x_max = pares->clave[0];
     mbr_x_min = pares->clave[1];
     mbr_y_max = pares->clave[2];
     mbr_y_min = pares->clave[3];
-        
+
+    count = 0;
+    rnodo.k = 0; 
     for(long elemento=0;elemento<b;elemento++){
-      if (count >= n) { 
+      if (count >= segmento) { 
         break;
       }
       count++;
-      Nodo nodo = {  
-        .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
-        .valor = pares->valor
-      };
 
       mbr_x_min = min(mbr_x_min, pares->clave[0]);
       mbr_x_max = max(mbr_x_max, pares->clave[1]);
       mbr_y_min = min(mbr_y_min, pares->clave[2]);
       mbr_y_max = max(mbr_y_max, pares->clave[3]);
       
-      rnodo.hijos[rnodo.k] = nodo;
-      rnodo.k++;
+      rnodo.hijos[rnodo.k] = *pares;
+      rnodo.k += 1;
 
       pares++;
     
-    }
+    } // aquí pares termina en el primer lugar no sorteado
 
+    nodo.valor = curr/sizeof(Rtree)+grupo+1;
+    nodo.clave[0] = mbr_x_min;
+    nodo.clave[1] = mbr_x_max;
+    nodo.clave[2] = mbr_y_min;
+    nodo.clave[3] = mbr_y_max;
 
-    nodos->valor = curr/sizeof(Rtree)+grupo;
-    nodos->clave[0] = mbr_x_min;
-    nodos->clave[1] = mbr_x_max;
-    nodos->clave[2] = mbr_y_min;
-    nodos->clave[3] = mbr_y_max;
-
-    pares[grupo] = *nodos;
+    original[grupo] = nodo;
     fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
     
     if (count>=n) {break;}
   }
+
+  pares = original;
   if (grupo<=b) {
+    rnodo.k = 0;
     for(long i = 0; i<grupo;i++) {
+      
+      rnodo.hijos[rnodo.k] = *pares;
+      rnodo.k += 1;
       pares++;
-      Nodo nodo = {
-        .clave = {pares->clave[0], pares->clave[1], pares->clave[2], pares->clave[3]},
-        .valor = pares->valor
-      };
-      rnodo.hijos[rnodo.k] = nodo;
-      rnodo.k++;
     }
-  };
-  sortTileRecursive(n, pares, file);
+    fseek(file, 0, SEEK_SET);
+    fwrite(&rnodo, sizeof(Rtree), 1, file);
+    return;
+  }
+
+  pares = original;
+  sortTileRecursive(grupo, pares, file);
 }
 
 // Esta función espera la cantidad de elementos a leer desde el archivo de entrada y los pone en
