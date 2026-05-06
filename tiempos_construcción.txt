@@ -1,0 +1,87 @@
+Test para datos random y NearestX
+Archivo datos abierto y lista llenada, 65536 elementos leidos
+Tomó 0.013001 segundos en ejecutarse para N=2^15
+Archivo datos abierto y lista llenada, 131072 elementos leidos
+Tomó 0.025164 segundos en ejecutarse para N=2^16
+Archivo datos abierto y lista llenada, 262144 elementos leidos
+Tomó 0.057723 segundos en ejecutarse para N=2^17
+Archivo datos abierto y lista llenada, 524288 elementos leidos
+Tomó 0.116150 segundos en ejecutarse para N=2^18
+Archivo datos abierto y lista llenada, 1048576 elementos leidos
+Tomó 0.240572 segundos en ejecutarse para N=2^19
+Archivo datos abierto y lista llenada, 2097152 elementos leidos
+Tomó 0.496685 segundos en ejecutarse para N=2^20
+Archivo datos abierto y lista llenada, 4194304 elementos leidos
+Tomó 1.017538 segundos en ejecutarse para N=2^21
+Archivo datos abierto y lista llenada, 8388608 elementos leidos
+Tomó 2.139531 segundos en ejecutarse para N=2^22
+Archivo datos abierto y lista llenada, 16777216 elementos leidos
+Tomó 4.408380 segundos en ejecutarse para N=2^23
+Archivo datos abierto y lista llenada, 33554432 elementos leidos
+Tomó 9.109341 segundos en ejecutarse para N=2^24
+
+Test para datos europa y NearestX
+Archivo datos abierto y lista llenada, 65536 elementos leidos
+Tomó 0.011672 segundos en ejecutarse para N=2^15
+Archivo datos abierto y lista llenada, 131072 elementos leidos
+Tomó 0.023825 segundos en ejecutarse para N=2^16
+Archivo datos abierto y lista llenada, 262144 elementos leidos
+Tomó 0.055217 segundos en ejecutarse para N=2^17
+Archivo datos abierto y lista llenada, 524288 elementos leidos
+Tomó 0.119503 segundos en ejecutarse para N=2^18
+Archivo datos abierto y lista llenada, 1048576 elementos leidos
+Tomó 0.240135 segundos en ejecutarse para N=2^19
+Archivo datos abierto y lista llenada, 2097152 elementos leidos
+Tomó 0.483506 segundos en ejecutarse para N=2^20
+Archivo datos abierto y lista llenada, 4194304 elementos leidos
+Tomó 1.076706 segundos en ejecutarse para N=2^21
+Archivo datos abierto y lista llenada, 8388608 elementos leidos
+Tomó 2.148130 segundos en ejecutarse para N=2^22
+Archivo datos abierto y lista llenada, 16777216 elementos leidos
+Tomó 4.423969 segundos en ejecutarse para N=2^23
+Archivo datos abierto y lista llenada, 33554432 elementos leidos
+Tomó 9.080022 segundos en ejecutarse para N=2^24
+
+Test para datos random y SortTileRecursive
+Archivo datos abierto y lista llenada, 65536 elementos leidos
+Tomó 0.011766 segundos en ejecutarse para N=2^15
+Archivo datos abierto y lista llenada, 131072 elementos leidos
+Tomó 0.023288 segundos en ejecutarse para N=2^16
+Archivo datos abierto y lista llenada, 262144 elementos leidos
+Tomó 0.053771 segundos en ejecutarse para N=2^17
+Archivo datos abierto y lista llenada, 524288 elementos leidos
+Tomó 0.112339 segundos en ejecutarse para N=2^18
+Archivo datos abierto y lista llenada, 1048576 elementos leidos
+Tomó 0.220315 segundos en ejecutarse para N=2^19
+Archivo datos abierto y lista llenada, 2097152 elementos leidos
+Tomó 0.514325 segundos en ejecutarse para N=2^20
+Archivo datos abierto y lista llenada, 4194304 elementos leidos
+Tomó 1.013994 segundos en ejecutarse para N=2^21
+Archivo datos abierto y lista llenada, 8388608 elementos leidos
+Tomó 2.162810 segundos en ejecutarse para N=2^22
+Archivo datos abierto y lista llenada, 16777216 elementos leidos
+Tomó 4.378705 segundos en ejecutarse para N=2^23
+Archivo datos abierto y lista llenada, 33554432 elementos leidos
+Tomó 9.011470 segundos en ejecutarse para N=2^24
+
+Test para datos europa y SortTileRecursive
+Archivo datos abierto y lista llenada, 65536 elementos leidos
+Tomó 0.011727 segundos en ejecutarse para N=2^15
+Archivo datos abierto y lista llenada, 131072 elementos leidos
+Tomó 0.023498 segundos en ejecutarse para N=2^16
+Archivo datos abierto y lista llenada, 262144 elementos leidos
+Tomó 0.054073 segundos en ejecutarse para N=2^17
+Archivo datos abierto y lista llenada, 524288 elementos leidos
+Tomó 0.108696 segundos en ejecutarse para N=2^18
+Archivo datos abierto y lista llenada, 1048576 elementos leidos
+Tomó 0.260388 segundos en ejecutarse para N=2^19
+Archivo datos abierto y lista llenada, 2097152 elementos leidos
+Tomó 0.485000 segundos en ejecutarse para N=2^20
+Archivo datos abierto y lista llenada, 4194304 elementos leidos
+Tomó 1.042572 segundos en ejecutarse para N=2^21
+Archivo datos abierto y lista llenada, 8388608 elementos leidos
+Tomó 2.140271 segundos en ejecutarse para N=2^22
+Archivo datos abierto y lista llenada, 16777216 elementos leidos
+Tomó 4.316042 segundos en ejecutarse para N=2^23
+Archivo datos abierto y lista llenada, 33554432 elementos leidos
+Tomó 8.904057 segundos en ejecutarse para N=2^24
