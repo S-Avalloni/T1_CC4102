@@ -6,22 +6,25 @@ int main() {
   // aquí voy a asumir que los arboles ya fueron creados
   // con make vec
 
-  FILE *datos_random = fopen("./datos/random.bin", "rb");
-  if (datos_random == NULL) {
-    perror("Error abriendo datos\n");
-    return 1;
-  }
-
-
-  FILE *vec_test = fopen("./vectores/v_test.bin", "wb");
-  if (vec_test == NULL) {
+  FILE *vec = fopen("./vectores/v_random_nx.bin", "rb");
+  if (vec == NULL) {
     perror("Error abriendo el archivo de vector\n");
     return 1;
   }
 
-  unsigned long N = 800;
-  bulkLoading(N, datos_random, vec_test, nearestX);
+  Rtree nodo;
+  Par hijo;
+  hijo.valor = 0;
+  long count = 0;
+  do {
 
-  fclose(vec_test);
+    nodo = readNode(&count, vec, hijo.valor);
+    hijo = nodo.hijos[nodo.k-1];
+
+  } while (hijo.valor != -1);
+
+  printf("%f %f en %ld iteraciones\n", hijo.clave[0], hijo.clave[1], count);
+
+  fclose(vec);
   return 0;
 }

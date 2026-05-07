@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <assert.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -87,6 +86,7 @@ void nearestX(long n, Par pares[], FILE *file) {
   // en el primer caso se salta el espacio de lo que sería la raiz
   if (curr==0) {
     fseek(file, sizeof(Rtree), SEEK_CUR);
+    curr = sizeof(Rtree);
   }
 
   // se ordena in place con quick sort
@@ -132,7 +132,7 @@ void nearestX(long n, Par pares[], FILE *file) {
     }
 
     
-    par.valor = curr/sizeof(Rtree)+1+grupo;
+    par.valor = curr/sizeof(Rtree)+grupo;
     par.clave[0] = mbr_x_min;
     par.clave[1] = mbr_x_max;
     par.clave[2] = mbr_y_min;

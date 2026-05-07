@@ -12,11 +12,16 @@ run-vectores: outputs/create_vec
 run-consultas: outputs/consultas
 	outputs/consultas
 
+run-test: outputs/test
+	outputs/test
+
 consultas: outputs/consultas
 
 time: outputs/test_time
 
 vectores: outputs/create_vec
+
+test: outputs/test
 
 outputs/test_time: src/test_time.c include/rtree.h
 	gcc $(flags) src/test_time.c -o outputs/test_time
@@ -26,6 +31,9 @@ outputs/create_vec: src/create_vec.c include/rtree.h
 
 outputs/consultas: src/consultas.c include/rtree.h
 	gcc $(flags) src/consultas.c -o outputs/consultas
+
+outputs/test: src/test.c include/rtree.h
+	gcc $(flags) src/test.c -o outputs/test
 
 clean-v:
 	rm -f vectores/*
