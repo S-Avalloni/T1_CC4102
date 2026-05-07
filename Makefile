@@ -33,7 +33,7 @@ outputs/create_vec: src/create_vec.c $(rtree)
 	gcc $(flags) $(rtree) src/create_vec.c -o outputs/create_vec
 
 outputs/consultas: src/consultas.c $(rtree)
-	gcc $(flags) $(rtree) src/consultas.c -o outputs/consultas
+	gcc $(flags) $(rtree) src/consultas.c -o outputs/consultas -lm
 
 outputs/test: src/test.c $(rtree)
 	gcc $(flags) $(rtree) src/test.c -o outputs/test

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 #include "../include/rtree.h"
 
 
@@ -39,13 +40,21 @@ long consultaCuadrado(float cuadrado[4], int offset, FILE *infile, long *lectura
 
 int main() {
   
-  FILE *rand_nx = fopen("./vectores/v_random_nx.bin", "rb");
-  if (rand_nx == NULL) {
-    perror("Error leyendo archivo de vector");
-    return 1;
+  char *rn = "./vectores/v_random_nx.bin";
+  char *rs = "./vectores/v_random_st.bin";
+  char *en = "./vectores/v_europa_nx.bin";
+  char *es = "./vectores/v_europa_st.bin";
+
+  char *nombres[4] = {rn, rs, en, es};
+  FILE *archivos[4];
+
+  for (int i = 0; i<4; i++) {
+    archivos[i] = fopen(nombres[i], "rb");
+    if (archivos[i] == NULL) {
+      fprintf(stderr, "Error abriendo archivo %s\n", nombres[i]);
+      return 1;
+    }
   }
-
-
 
   float s[] = {0.0025, 0.005, 0.01, 0.025, 0.05};
   
@@ -58,9 +67,8 @@ int main() {
   float *lista_y = malloc(sizeof(float)*100);
   
   for (int i = 0; i<5; i++) {
-    long total_puntos = 0;
-    long lecturas_totales = 0;
-    double suma_cuadrado = 0;
+    
+    printf("\nAnalisis cuadrados aleatorios de tamaño %lf\n",s[i]);
     double esperado = (double)s[i]*(double)s[i]*(double)(1<<24);
     
     for (int j = 0; j<100; j++) {
@@ -71,23 +79,29 @@ int main() {
       lista_x[j] = pos_x;
       lista_y[j] = pos_y;
     }
+    
+    for (int f = 0; f<4; f++) { // archivo[f]
+      printf("Vector de nodos: %s\n", nombres[f]);
+      long total_puntos = 0;
+      long lecturas_totales = 0;
+      double suma_cuadrado = 0;
 
-
-    for (int j = 0; j<100; j++) {
-
-      float cuadrado[4] = {lista_x[j], lista_x[j]+s[i], lista_y[j], lista_y[j]+s[i]};
-      
-      long resultado = consultaCuadrado(cuadrado, 0, rand_nx, &lecturas_totales);
-      
-      // printf("%ld elementos dentro del cuadrado en %ld lecturas\n", resultado, lecturas_totales);
-      total_puntos += resultado;
-      suma_cuadrado += ((double)resultado-esperado)*((double)resultado-esperado);
-
+      for (int j = 0; j<100; j++) {
+  
+        float cuadrado[4] = {lista_x[j], lista_x[j]+s[i], lista_y[j], lista_y[j]+s[i]};
+        
+        long resultado = consultaCuadrado(cuadrado, 0, archivos[f], &lecturas_totales);
+        
+        total_puntos += resultado;
+        suma_cuadrado += ((double)resultado-esperado)*((double)resultado-esperado);
+  
+      }
+  
+      printf("promedio puntos encontrados: %f\nvalor esperado de puntos: %f\n", (float)total_puntos/100., esperado);
+      printf("desviación estandar puntos: %lf\n", sqrt(suma_cuadrado/99.));
+      printf("promedio lecturas de disco: %f\n", (float)lecturas_totales/100.);
     }
 
-    printf("promedio puntos encontrados: %f\nvalor esperado de puntos: %f\n", (float)total_puntos/100., esperado);
-    printf("desviación estandar puntos: %f\n", (float)suma_cuadrado/99.);
-    printf("promedio lecturas de disco: %f\n", (float)lecturas_totales/100.);
 
   }
 
