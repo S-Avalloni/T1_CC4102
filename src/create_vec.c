@@ -49,17 +49,17 @@ int main() {
   long N = 1<<24;
 
 
-  bulkLoading(N, datos_eur, vector_eur_st, sortTileRecursive);
-  printf("vector_eur_st creado\n");
-  fseek(datos_eur, 0, SEEK_SET);
-  bulkLoading(N, datos_eur, vector_eur_nx, nearestX);
-  printf("vector_eur_nx creado\n");
-  
   bulkLoading(N, datos_random, vector_ran_nx, nearestX);
   printf("vector_ran_nx creado\n");
   fseek(datos_random, 0, SEEK_SET);
   bulkLoading(N, datos_random, vector_ran_st, sortTileRecursive);
   printf("vector_ran_st creado\n");
+
+  bulkLoading(N, datos_eur, vector_eur_st, sortTileRecursive);
+  printf("vector_eur_st creado\n");
+  fseek(datos_eur, 0, SEEK_SET);
+  bulkLoading(N, datos_eur, vector_eur_nx, nearestX);
+  printf("vector_eur_nx creado\n");
 
   fclose(datos_random);
   fclose(datos_eur);

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -8,16 +9,26 @@
 
 
 typedef struct {
+  // (x1, x2, y1, y2) minimo y maximo de x e y respectivamente
   float clave[4];
+  
+  // posición relativa en el vector de nodos de este nodo
   int valor;
-} Nodo;
+} Par;
 
-typedef void (*BulkFunction)(long n, Nodo pares[], FILE *file);
+// firma de las funciones para hacer bulk loading
+typedef void (*BulkFunction)(long n, Par pares[], FILE *file);
 
+// un nodo del Rtree
 typedef struct {
-  int k; // cantidad de hijos, entre 1 y b
-  Nodo hijos[b]; // solo están definidos los primeros k hijos
-  char pad[12]; // 12 bytes libres
+  // cantidad de hijos, entre 1 y b
+  int k;
+
+  // solo están definidos los primeros k hijos, luego de eso es UB
+  Par hijos[b];
+  
+  // 12 bytes libres, contenido es UB
+  char pad[12];
 } Rtree;
 
 // Menor k tal que k*k >= y
@@ -37,10 +48,10 @@ long isqrt(long y) {
 }
 
 int cmp_cx(const void *e1, const void *e2) {
-    Nodo *elemA = (Nodo *)e1;
+    Par *elemA = (Par *)e1;
     float v1 = elemA->clave[0] + (elemA->clave[1] - elemA->clave[0])/2.0F;
     
-    Nodo *elemB = (Nodo *)e2;
+    Par *elemB = (Par *)e2;
     float v2 = elemB->clave[0] + (elemB->clave[1] - elemB->clave[0])/2.0F;
 
     if (v1 > v2) {
@@ -53,10 +64,10 @@ int cmp_cx(const void *e1, const void *e2) {
 }
 
 int cmp_cy(const void *e1, const void *e2) {
-    Nodo *elemA = (Nodo *)e1;
+    Par *elemA = (Par *)e1;
     float v1 = elemA->clave[2] + (elemA->clave[3] - elemA->clave[2])/2.0F;
     
-    Nodo *elemB = (Nodo *)e2;
+    Par *elemB = (Par *)e2;
     float v2 = elemB->clave[2] + (elemB->clave[3] - elemB->clave[2])/2.0F;
 
     if (v1 > v2) {
@@ -68,9 +79,8 @@ int cmp_cy(const void *e1, const void *e2) {
     }
 }
 
-// tomé los n pares llave valor directamente como un nodo
-// se especifica que las llaves de los nodos hoja es -1
-void nearestX(long n, Nodo pares[], FILE *file) {
+// Todo!
+void nearestX(long n, Par pares[], FILE *file) {
   
   // posición actual del archivo
   long curr = ftell(file);
@@ -80,18 +90,19 @@ void nearestX(long n, Nodo pares[], FILE *file) {
   }
 
   // se ordena in place con quick sort
-  qsort(pares, n, sizeof(Nodo), cmp_cx); 
-  Nodo *original = pares;
+  qsort(pares, n, sizeof(Par), cmp_cx); 
+  Par *original = pares;
 
-  Nodo nodo;
+  Par par;
 
-  // Un nodo del R-tree
   Rtree rnodo;
 
-  // cantidad de elementos de ''pares'' que ha sido vista
+  // cantidad de elementos de pares que ha sido vista
   int count =  0;
-  long grupo;
-  for(grupo = 0; grupo<(1+(n-1)/b); grupo++){
+
+  long grupo = 0;
+  while (1) {
+
     rnodo.k = 0;
 
     // Para calcular el MBR durante el proceso de relleno del
@@ -121,16 +132,18 @@ void nearestX(long n, Nodo pares[], FILE *file) {
     }
 
     
-    nodo.valor = curr/sizeof(Rtree)+grupo+1;
-    nodo.clave[0] = mbr_x_min;
-    nodo.clave[1] = mbr_x_max;
-    nodo.clave[2] = mbr_y_min;
-    nodo.clave[3] = mbr_y_max;
+    par.valor = curr/sizeof(Rtree)+1+grupo;
+    par.clave[0] = mbr_x_min;
+    par.clave[1] = mbr_x_max;
+    par.clave[2] = mbr_y_min;
+    par.clave[3] = mbr_y_max;
 
-    original[grupo] = nodo;
-    fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
-    
-    if (count>=n) {break;}
+    original[grupo] = par;
+    fwrite(&rnodo, sizeof(Rtree), 1, file);
+    grupo++;
+    if (count >= n) { 
+      break;
+    }
   }
   pares = original;
   if (grupo<=b) {
@@ -150,7 +163,7 @@ void nearestX(long n, Nodo pares[], FILE *file) {
   nearestX(grupo, pares, file);
 }
 
-void sortTileRecursive(long n, Nodo pares[], FILE *file) {
+void sortTileRecursive(long n, Par pares[], FILE *file) {
   
   
   // posición actual del archivo
@@ -161,9 +174,9 @@ void sortTileRecursive(long n, Nodo pares[], FILE *file) {
   }
 
   // se ordena in place con quick sort
-  qsort(pares, n, sizeof(Nodo), cmp_cx);
+  qsort(pares, n, sizeof(Par), cmp_cx);
   
-  Nodo *original = pares;
+  Par *original = pares;
 
   // puede ser que el ultimo de estos grupos tenga muchos menos elementos
   long cantidad_grupos = isqrt(1+(n-1)/b);
@@ -173,7 +186,7 @@ void sortTileRecursive(long n, Nodo pares[], FILE *file) {
 
   long restantes = n;
   
-  Nodo nodo;
+  Par nodo;
 
   // Un nodo del R-tree
   Rtree rnodo;
@@ -184,7 +197,7 @@ void sortTileRecursive(long n, Nodo pares[], FILE *file) {
     long segmento = min(restantes, limite_grupos);
 
     // se ordenan los elementos que se puedan en su coordenada y
-    qsort(pares, segmento, sizeof(Nodo), cmp_cy);
+    qsort(pares, segmento, sizeof(Par), cmp_cy);
     restantes -= segmento;
     
     float mbr_x_max, mbr_x_min, mbr_y_max, mbr_y_min;
@@ -264,10 +277,10 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
     printf("Archivo datos abierto y lista llenada, %zu elementos leidos\n", resultado);
   }
 
-  // pares tiene asignado una posición de memoria de tamaño sizeof(Nodo) por cada par de resultados
-  Nodo *pares = malloc(sizeof(Nodo)*resultado>>1);
+  // pares tiene asignado una posición de memoria de tamaño sizeof(Par) por cada par de resultados
+  Par *pares = malloc(sizeof(Par)*N);
 
-  for (unsigned long i = 0; i<(resultado>>1); i++) {
+  for (unsigned long i = 0; i < N; i++) {
     pares->clave[1] = lista[2*i];
     pares->clave[0] = lista[2*i]; 
     
@@ -278,15 +291,34 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
     pares++;
   }
 
-  pares -= resultado>>1;
+  pares -= N;
 
   free(lista);
   lista = NULL;
 
-  bulkFunction(resultado>>1, pares, outfile);
+  bulkFunction(N, pares, outfile);
   free(pares);
   pares=NULL;
   return 0;
 }
+
+
+// count: contador que aumenta en 1
+// infile: archivo abierto del que se lee el nodo
+// offset: posición del nodo (en relación al tamaño de un nodo) 
+//         desde el inicio (offset 1 está a sizeof(Rtree) bytes)
+// Retorna el nodo del Rtree en infile en la posición offset y 
+// aumenta el contador.
+// El archivo vuelve a la posición en la que estaba originalmente
+Rtree readNode(long *count, FILE *infile, size_t offset) {
+  unsigned long curr = ftell(infile);
+  fseek(infile, offset*sizeof(Rtree), SEEK_SET);
+  Rtree nodo;
+  fread(&nodo, sizeof(Rtree), 1, infile);
+  fseek(infile, curr, SEEK_SET);
+  *count += 1;
+  return nodo;
+}
+
 
 
