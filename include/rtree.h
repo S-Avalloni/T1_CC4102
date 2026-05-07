@@ -101,7 +101,7 @@ void nearestX(long n, Par pares[], FILE *file) {
   int count =  0;
 
   long grupo = 0;
-  while (1) {
+  do {
 
     rnodo.k = 0;
 
@@ -141,10 +141,9 @@ void nearestX(long n, Par pares[], FILE *file) {
     original[grupo] = par;
     fwrite(&rnodo, sizeof(Rtree), 1, file);
     grupo++;
-    if (count >= n) { 
-      break;
-    }
-  }
+
+  } while (count < n);
+
   pares = original;
   if (grupo<=b) {
     rnodo.k = 0;
@@ -171,11 +170,11 @@ void sortTileRecursive(long n, Par pares[], FILE *file) {
   // en el primer caso se salta el espacio de lo que sería la raiz
   if (curr==0) {
     fseek(file, sizeof(Rtree), SEEK_CUR);
+    curr = sizeof(Rtree);
   }
 
   // se ordena in place con quick sort
   qsort(pares, n, sizeof(Par), cmp_cx);
-  
   Par *original = pares;
 
   // puede ser que el ultimo de estos grupos tenga muchos menos elementos
@@ -186,57 +185,61 @@ void sortTileRecursive(long n, Par pares[], FILE *file) {
 
   long restantes = n;
   
-  Par nodo;
+  Par par;
 
   // Un nodo del R-tree
   Rtree rnodo;
-  long count;
-
-  long grupo;
-  for (grupo = 0; grupo<cantidad_grupos; grupo++) {
+  
+  long count_total = 0;
+  long grupo = 0;
+  do { // grupo
+    // tamaño del segmento a ordenar
     long segmento = min(restantes, limite_grupos);
 
     // se ordenan los elementos que se puedan en su coordenada y
     qsort(pares, segmento, sizeof(Par), cmp_cy);
     restantes -= segmento;
     
-    float mbr_x_max, mbr_x_min, mbr_y_max, mbr_y_min;
-    mbr_x_max = pares->clave[0];
-    mbr_x_min = pares->clave[1];
-    mbr_y_max = pares->clave[2];
-    mbr_y_min = pares->clave[3];
+    long count_segment = 0;
 
-    count = 0;
-    rnodo.k = 0; 
-    for(long elemento=0;elemento<b;elemento++){
-      if (count >= segmento) { 
-        break;
-      }
-      count++;
+    do { // subgrupo
 
-      mbr_x_min = min(mbr_x_min, pares->clave[0]);
-      mbr_x_max = max(mbr_x_max, pares->clave[1]);
-      mbr_y_min = min(mbr_y_min, pares->clave[2]);
-      mbr_y_max = max(mbr_y_max, pares->clave[3]);
+      float mbr_x_max, mbr_x_min, mbr_y_max, mbr_y_min;
+      mbr_x_max = pares->clave[0];
+      mbr_x_min = pares->clave[1];
+      mbr_y_max = pares->clave[2];
+      mbr_y_min = pares->clave[3];
+  
+      rnodo.k = 0; 
+      for(long elemento=0;elemento<b;elemento++){
+        if (count_segment >= segmento) { 
+          break;
+        }
+        count_segment++;
+  
+        mbr_x_min = min(mbr_x_min, pares->clave[0]);
+        mbr_x_max = max(mbr_x_max, pares->clave[1]);
+        mbr_y_min = min(mbr_y_min, pares->clave[2]);
+        mbr_y_max = max(mbr_y_max, pares->clave[3]);
+        
+        rnodo.hijos[rnodo.k] = *pares;
+        rnodo.k += 1;
+  
+        pares++;
       
-      rnodo.hijos[rnodo.k] = *pares;
-      rnodo.k += 1;
-
-      pares++;
-    
-    } // aquí pares termina en el primer lugar no sorteado
-
-    nodo.valor = curr/sizeof(Rtree)+grupo+1;
-    nodo.clave[0] = mbr_x_min;
-    nodo.clave[1] = mbr_x_max;
-    nodo.clave[2] = mbr_y_min;
-    nodo.clave[3] = mbr_y_max;
-
-    original[grupo] = nodo;
-    fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
-    
-    if (count>=n) {break;}
-  }
+      }
+      par.valor = curr/sizeof(Rtree)+grupo;
+      par.clave[0] = mbr_x_min;
+      par.clave[1] = mbr_x_max;
+      par.clave[2] = mbr_y_min;
+      par.clave[3] = mbr_y_max;
+  
+      original[grupo] = par;
+      fwrite(&rnodo, sizeof(Rtree), 1, file); // ver como es que se guardaba, asumo que esto funciona, después lo arreglo
+      grupo++;
+    } while (count_segment < segmento);
+    count_total += count_segment;
+  } while (count_total < n);
 
   pares = original;
   if (grupo<=b) {
