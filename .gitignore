@@ -1,8 +1,8 @@
 /*.pdf
 /*.zip
-/tarea1-cc4102-2026-1-Datos/
-/datos/
-*.exe
-/vectores/
 /.vscode/
-/outputs/
+/vectores/*
+/datos/*
+/outputs/*
+
+!/*/.empty
