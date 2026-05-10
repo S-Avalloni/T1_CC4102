@@ -3,7 +3,6 @@
 #include <math.h>
 #include "rtree.h"
 
-// Menor k tal que k*k >= y
 long isqrt(long y) {
   long L = 0;
   long R = y + 1;
@@ -232,9 +231,6 @@ void sortTileRecursive(long n, Par pares[], FILE *file) {
   sortTileRecursive(grupo, pares, file);
 }
 
-// Esta función espera la cantidad de elementos a leer desde el archivo de entrada y los pone en
-// el archivo de salida según el metodo de BulkLoading especificado, estos dos archivos deben 
-// estar abiertos al momento de comenzar la función y no los cierra
 int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkFunction) {
 
   // dos float por cada par
@@ -279,13 +275,6 @@ int bulkLoading(unsigned long N, FILE *infile, FILE* outfile, BulkFunction bulkF
 }
 
 
-// count: contador que aumenta en 1
-// infile: archivo abierto del que se lee el nodo
-// offset: posición del nodo (en relación al tamaño de un nodo) 
-//         desde el inicio (offset 1 está a sizeof(Rtree) bytes)
-// Retorna el nodo del Rtree en infile en la posición offset y 
-// aumenta el contador.
-// El archivo vuelve a la posición en la que estaba originalmente
 Rtree readNode(long *count, FILE *infile, size_t offset) {
   unsigned long curr = ftell(infile);
   fseek(infile, offset*sizeof(Rtree), SEEK_SET);
@@ -296,5 +285,34 @@ Rtree readNode(long *count, FILE *infile, size_t offset) {
   return nodo;
 }
 
+long consultaRectangulo(float rectangulo[4], int offset, FILE *infile, long *lecturas) {
+
+  // voy a asumir que la raiz siempre intersecta
+  Rtree nodo = readNode(lecturas, infile, offset);
+  
+  long conteo = 0;
+  for (int i = 0; i<nodo.k; i++) {
+    if( (nodo.hijos[i].clave[0] > rectangulo[1]) || // Rtree -> min x > max x <- rectangulo
+        (nodo.hijos[i].clave[1] < rectangulo[0]) || //          max x < min x 
+        (nodo.hijos[i].clave[2] > rectangulo[3]) || //          min y > max y
+        (nodo.hijos[i].clave[3] < rectangulo[2])) { //          max y < max y
+      
+      // Si se cumple alguna de las condiciones el rectangulo no se intersecta
+      // con el nodo, si cualquiera se rompe quiere decir que se intersectan
+      // de alguna manera
+      continue;
+    }
+    
+    if (nodo.hijos[i].valor == -1) {
+      conteo += 1;
+      continue;
+    }
+    
+    conteo += consultaRectangulo(rectangulo, nodo.hijos[i].valor, infile, lecturas);
+  }
+
+  return conteo;
+
+}
 
 

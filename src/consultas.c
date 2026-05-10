@@ -5,38 +5,6 @@
 #include "../include/rtree.h"
 
 
-// cuadrado: (x1, x2, y1, y2) minimo y maximo de x e y respectivamente
-// offset: posición de la raiz relativa
-// infile: archivo ya abierto desde el que se leen los nodos del R-tree
-long consultaCuadrado(float cuadrado[4], int offset, FILE *infile, long *lecturas) {
-
-  // voy a asumir que la raiz siempre intersecta
-  Rtree nodo = readNode(lecturas, infile, offset);
-  
-  long conteo = 0;
-  for (int i = 0; i<nodo.k; i++) {
-    if( (nodo.hijos[i].clave[0] > cuadrado[1]) || // Rtree -> min x > max x <- cuadrado
-        (nodo.hijos[i].clave[1] < cuadrado[0]) || //          max x < min x 
-        (nodo.hijos[i].clave[2] > cuadrado[3]) || //          min y > max y
-        (nodo.hijos[i].clave[3] < cuadrado[2])) { //          max y < max y
-      
-      // Si se cumple alguna de las condiciones el cuadrado no se intersecta
-      // con el nodo, si cualquiera se rompe quiere decir que se intersectan
-      // de alguna manera
-      continue;
-    }
-    
-    if (nodo.hijos[i].valor == -1) {
-      conteo += 1;
-      continue;
-    }
-    
-    conteo += consultaCuadrado(cuadrado, nodo.hijos[i].valor, infile, lecturas);
-  }
-
-  return conteo;
-
-}
 
 int main() {
   
@@ -90,7 +58,7 @@ int main() {
   
         float cuadrado[4] = {lista_x[j], lista_x[j]+s[i], lista_y[j], lista_y[j]+s[i]};
         
-        long resultado = consultaCuadrado(cuadrado, 0, archivos[f], &lecturas_totales);
+        long resultado = consultaRectangulo(cuadrado, 0, archivos[f], &lecturas_totales);
         
         total_puntos += resultado;
         suma_cuadrado += ((double)resultado-esperado)*((double)resultado-esperado);
